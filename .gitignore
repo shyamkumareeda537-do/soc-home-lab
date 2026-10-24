@@ -1,0 +1,43 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Windows specific
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Virtual environments
+venv/
+env/
+ENV/
+.env
+
+# Splunk local runtime & sensitive data
+splunk/var/
+splunk/etc/auth/
+*.log
+*.sqlite3
+
+# Sanitized logs only in repo; ignore raw private event log dumps
+*.evtx
+!python/sample_logs/*.json
+!python/sample_logs/*.evtx.sample
+
+# Tools binaries and large installers
+tools/*.zip
+tools/*.msi
+*.msi
+tools/sysmon/
+!tools/sysmonconfig.xml
+!tools/install_splunk.bat
+*.log
+
+# Credentials and keys
+secrets/
+*.pem
+*.key
+*.token
+credentials.json

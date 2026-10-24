@@ -1,0 +1,136 @@
+<dashboard version="1.1" theme="dark">
+  <label>SOC Home Lab - Security Monitoring &amp; Threat Detection</label>
+  <description>Real-Time Monitoring of Windows Security &amp; Microsoft Sysmon Telemetry</description>
+  
+  <row>
+    <panel>
+      <title>Total Endpoint Events Ingested</title>
+      <single>
+        <search>
+          <query>index=endpoint | stats count</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+          <refresh>30s</refresh>
+        </search>
+        <option name="colorMode">block</option>
+        <option name="rangeColors">["0x53a051","0x006d9c"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="useColors">1</option>
+      </single>
+    </panel>
+    
+    <panel>
+      <title>Failed Logins (Event ID 4625)</title>
+      <single>
+        <search>
+          <query>index=endpoint EventCode=4625 | stats count</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+          <refresh>30s</refresh>
+        </search>
+        <option name="colorMode">block</option>
+        <option name="rangeColors">["0x53a051","0xf8be34","0xdc4e41"]</option>
+        <option name="rangeValues">[0,5]</option>
+        <option name="useColors">1</option>
+      </single>
+    </panel>
+    
+    <panel>
+      <title>Successful Logins (Event ID 4624)</title>
+      <single>
+        <search>
+          <query>index=endpoint EventCode=4624 | stats count</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+          <refresh>30s</refresh>
+        </search>
+        <option name="colorMode">block</option>
+        <option name="rangeColors">["0x006d9c","0x53a051"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="useColors">1</option>
+      </single>
+    </panel>
+    
+    <panel>
+      <title>Account Lockouts (Event ID 4740)</title>
+      <single>
+        <search>
+          <query>index=endpoint EventCode=4740 | stats count</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+          <refresh>30s</refresh>
+        </search>
+        <option name="colorMode">block</option>
+        <option name="rangeColors">["0x53a051","0xdc4e41"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="useColors">1</option>
+      </single>
+    </panel>
+  </row>
+  
+  <row>
+    <panel>
+      <title>Authentication Activity Over Time</title>
+      <chart>
+        <search>
+          <query>index=endpoint (EventCode=4624 OR EventCode=4625) 
+| eval Status=if(EventCode==4624, "Successful Logon (4624)", "Failed Logon (4625)") 
+| timechart span=15m count by Status</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+          <refresh>30s</refresh>
+        </search>
+        <option name="charting.chart">column</option>
+        <option name="charting.chart.stackMode">stacked</option>
+        <option name="charting.legend.placement">bottom</option>
+      </chart>
+    </panel>
+    
+    <panel>
+      <title>Telemetry Ingestion by Sourcetype</title>
+      <chart>
+        <search>
+          <query>index=endpoint | stats count by sourcetype</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+          <refresh>30s</refresh>
+        </search>
+        <option name="charting.chart">pie</option>
+        <option name="charting.legend.placement">right</option>
+      </chart>
+    </panel>
+  </row>
+  
+  <row>
+    <panel>
+      <title>Top Target Accounts Associated with Failed Logons (EventCode 4625)</title>
+      <table>
+        <search>
+          <query>index=endpoint EventCode=4625 
+| stats count as Failed_Attempts, values(Workstation_Name) as Source_Workstation, values(IpAddress) as Source_IP, latest(_time) as Last_Attempt by TargetUserName 
+| fieldformat Last_Attempt=strftime(Last_Attempt, "%Y-%m-%d %H:%M:%S")
+| sort - Failed_Attempts</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="count">10</option>
+      </table>
+    </panel>
+    
+    <panel>
+      <title>Recent Suspicious Sysmon Process Executions (EventCode 1)</title>
+      <table>
+        <search>
+          <query>index=endpoint sourcetype="WinEventLog:Microsoft-Windows-Sysmon/Operational" EventCode=1 
+| eval cmd=lower(CommandLine)
+| search cmd="*powershell*" OR cmd="*cmd.exe*" OR cmd="*bypass*" OR cmd="*whoami*"
+| table _time, User, ParentImage, Image, CommandLine 
+| sort - _time</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="count">10</option>
+      </table>
+    </panel>
+  </row>
+</dashboard>
